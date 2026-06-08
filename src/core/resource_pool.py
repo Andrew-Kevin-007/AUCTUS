@@ -72,6 +72,11 @@ class ResourcePool:
         # Last VCG clearing price per resource type (seeded to 0; updated by auctioneer)
         self.last_clearing_price: Dict[str, float] = {r: 0.0 for r in self.capacity}
 
+        # Token-denominated reserve credit from ERP 30% surplus.
+        # Separate from reserve_pool_balance (which tracks physical capacity units).
+        # Accumulates token credits that subsidise future SFG allocations.
+        self.reserve_token_balance: float = 0.0
+
     # ------------------------------------------------------------------
     # Capacity queries
     # ------------------------------------------------------------------
