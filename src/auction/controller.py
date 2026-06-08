@@ -284,9 +284,17 @@ class AuctionController:
     # ------------------------------------------------------------------
 
     def start(self, sim_duration_minutes: float) -> None:
-        """Register the auction loop and run the SimPy environment."""
+        """
+        Register the auction loop and run the SimPy environment.
+
+        SimPy's ``env.run(until=T)`` does not process events scheduled
+        *at* exactly T — events at T are deferred to a future step that
+        never happens.  Running until T + ROUND_INTERVAL - 1 ensures the
+        final round (scheduled at T) fires while the next round
+        (scheduled at T + ROUND_INTERVAL) is still beyond the boundary.
+        """
         self.env.process(self._auction_loop(sim_duration_minutes))
-        self.env.run(until=sim_duration_minutes)
+        self.env.run(until=sim_duration_minutes + ROUND_INTERVAL - 1)
 
     def _auction_loop(self, sim_duration_minutes: float):
         """SimPy generator: fire one round every ROUND_INTERVAL minutes."""

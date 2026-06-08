@@ -8,7 +8,7 @@ $$C_{\text{CPU}} = 100 \text{ cores}, \qquad C_{\text{RAM}} = 512 \text{ GB}$$
 
 Time is discretized into auction rounds of interval $\Delta t = 5$ minutes, yielding
 
-$$\mathcal{T} = 8640 \text{ rounds per monthly period}$$
+$$|\mathcal{T}| = 8640 \text{ rounds per monthly period}$$
 
 Each node $i \in \mathcal{N}$ is initialized with a token endowment
 
@@ -30,11 +30,9 @@ At the start of each monthly period, balances reset with a partial carryover:
 
 $$\tau_i(0) = T_0 + \min\!\left(0.2 \cdot T_0,\; \tau_i(T_{\text{period}})\right)$$
 
-This soft rollover rewards conservative spenders while bounding the compounding advantage to at most $1.2 \cdot T_0$.
-
 ### 2.3 Deduction on Win
 
-When node $i$ wins an allocation in round $t$ and pays price $p_i(t)$:
+When node $i$ wins an allocation in round $t$ at price $p_i(t)$:
 
 $$\tau_i(t+1) = \tau_i(t) - p_i(t)$$
 
@@ -56,8 +54,6 @@ $$b_i(t, r) \leq \tau_i(t)$$
 
 ### 3.2 Winner Determination
 
-The winner is the highest bidder:
-
 $$i^* = \underset{i \in \mathcal{N}}{\arg\max}\; b_i(t, r)$$
 
 ### 3.3 VCG Payment (Second-Price)
@@ -72,11 +68,11 @@ $$a_i(t, r) = \begin{cases} 1 & \text{if } i = i^* \\ 0 & \text{if } i \neq i^* 
 
 ### 3.5 Dominant Strategy Incentive Compatibility (DSIC)
 
-Under the second-price rule, truthful bidding is a weakly dominant strategy for every node. Formally, let $v_i(t, r)$ be node $i$'s true valuation. For all $b_i \neq v_i$ and all bid profiles $b_{-i}$ of other nodes:
+Under the second-price rule, truthful bidding is a weakly dominant strategy. Let $v_i(t, r)$ be node $i$'s true valuation. For all alternative bids $b_i \neq v_i$ and all bid profiles $b_{-i}$:
 
 $$u_i\!\left(v_i,\, b_{-i}\right) \geq u_i\!\left(b_i,\, b_{-i}\right)$$
 
-where $u_i$ is the utility (valuation minus payment) of node $i$. This property holds regardless of the strategies of other nodes.
+where $u_i$ is utility (valuation minus payment). This property holds regardless of the strategies of other nodes.
 
 ---
 
@@ -84,27 +80,27 @@ where $u_i$ is the utility (valuation minus payment) of node $i$. This property 
 
 ### 4.1 Hunger Counter
 
-Define the hunger counter of node $i$ at round $t$ as the number of consecutive rounds in which $i$ received no allocation:
+Define $\text{hunger}_i(t)$ as the number of consecutive rounds ending at $t$ in which node $i$ received no allocation:
 
-$$\text{hunger}_i(t) = \max\!\left\{k \geq 0 : a_i(t - k, r) = 0 \;\forall\, r,\; \forall\, s \in [t-k, t]\right\}$$
+$$\text{hunger}_i(t) = \max\!\left\{k \geq 0 : a_i(s, r) = 0 \;\forall\, r \in \mathcal{R},\; \forall\, s \in [t-k, t]\right\}$$
 
 ### 4.2 Trigger Condition
 
-If $\text{hunger}_i(t) \geq W$ (default $W = 10$), node $i$ is granted a guaranteed allocation from the reserve pool, bypassing the open auction for that round.
+If $\text{hunger}_i(t) \geq W$ (default $W = 10$), node $i$ receives a guaranteed allocation from the reserve pool, bypassing the open auction for that round.
 
 ### 4.3 SFG Price
 
-The SFG allocation is not priced at auction; instead, the node is charged the previous round's clearing price:
+The SFG allocation is not subject to competitive clearing. The charged price is the previous round's market clearing price:
 
 $$p_{\text{SFG}}(t, r) = \text{clearing\_price}(t - 1, r)$$
 
 ### 4.4 Reserve Pool
 
-A fixed fraction of total capacity is withheld from the open market to service SFG and ERP allocations:
+A fixed fraction of total capacity is withheld from the open auction to service SFG and ERP allocations:
 
 $$C_r^{\text{reserve}} = 0.10 \cdot C_r \quad \forall\, r \in \mathcal{R}$$
 
-The capacity available in the open auction is thus $C_r^{\text{market}} = 0.90 \cdot C_r$.
+The capacity available in the open auction is $C_r^{\text{market}} = 0.90 \cdot C_r$.
 
 ---
 
@@ -119,7 +115,7 @@ $$\text{ERP\_score}_i = 0.4 \cdot \text{SLA\_breach\_prob}_i + 0.4 \cdot \text{c
 where:
 
 - $\text{SLA\_breach\_prob}_i \in [0, 1]$ — estimated probability of an imminent SLA violation.
-- $\text{criticality}_i \in \{1, 2, 3\}$ — admin-assigned class at node registration, **immutable**:
+- $\text{criticality}_i \in \{1, 2, 3\}$ — admin-assigned at node registration, **immutable**:
   - $1$ — Critical infrastructure (E1)
   - $2$ — Production outage (E2)
   - $3$ — SLA breach (E3)
@@ -129,12 +125,13 @@ where:
 
 An ERP declaration by node $i$ at round $t$ is valid iff both conditions hold simultaneously:
 
-$$\text{ERP\_score}_i > \theta \quad \text{(default } \theta = 0.7\text{)}$$
+$$\text{ERP\_score}_i > \theta \quad (\text{default } \theta = 0.7)$$
+
 $$\tau_i(t) \geq 1.5 \cdot \text{clearing\_price}(t, r)$$
 
 ### 5.3 ERP Pricing and Token Accounting
 
-Let $p_c = \text{clearing\_price}(t, r)$ denote the prevailing market clearing price. The ERP transaction distributes tokens as follows:
+Let $p_c = \text{clearing\_price}(t, r)$. The ERP transaction distributes tokens as follows:
 
 | Party | Token Flow |
 |---|---|
@@ -142,15 +139,11 @@ Let $p_c = \text{clearing\_price}(t, r)$ denote the prevailing market clearing p
 | Preempted node $j$ | $+0.70 \cdot p_c$ |
 | Reserve pool | $+0.30 \cdot p_c$ |
 
-This accounting is closed: the $0.30 \cdot p_c$ surplus credited to the reserve pool exactly offsets the premium paid by the requester above the refund to the preempted node.
-
-$$\underbrace{1.5 \cdot p_c}_{\text{requester pays}} = \underbrace{0.70 \cdot p_c}_{\text{preempted refund}} + \underbrace{0.30 \cdot p_c}_{\text{reserve pool credit}} + \underbrace{0.50 \cdot p_c}_{\text{premium retained}}$$
-
-> **Note:** The reserve pool gain of $0.30 \cdot p_c$ closes the token accounting loop; no tokens are created or destroyed by an ERP event.
+The $0.30 \cdot p_c$ credited to the reserve pool closes the token accounting loop.
 
 ### 5.4 Monthly Cap
 
-$$\text{emergency\_count}_i \leq N_e = 3 \quad \forall\, i \in \mathcal{N}, \text{ per monthly period}$$
+$$\text{emergency\_count}_i \leq N_e = 3 \quad \forall\, i \in \mathcal{N},\; \text{per monthly period}$$
 
 Declarations in excess of $N_e$ are rejected regardless of ERP score.
 
@@ -162,8 +155,8 @@ System-wide allocation fairness over a simulation period of $T$ rounds is measur
 
 $$J(\mathbf{x}) = \frac{\left(\displaystyle\sum_{i=1}^{n} x_i\right)^2}{n \cdot \displaystyle\sum_{i=1}^{n} x_i^2}, \qquad J \in \left[\frac{1}{n},\, 1\right]$$
 
-where $x_i$ is the total number of allocation-rounds received by node $i$ over the simulation period:
+where $x_i$ is the total allocation received by node $i$ over the simulation period:
 
 $$x_i = \sum_{t=1}^{T} \sum_{r \in \mathcal{R}} a_i(t, r)$$
 
-$J = 1$ indicates perfect fairness (all nodes receive equal allocation); $J = 1/n$ indicates maximum unfairness (one node receives all allocations). The SFG mechanism is designed to enforce a lower bound on $J$ by preventing any node from being starved for more than $W$ consecutive rounds.
+$J = 1$ indicates perfect fairness; $J = 1/n$ indicates maximum unfairness (one node receives all allocations). The SFG mechanism enforces a lower bound on $J$ by preventing any node from being starved for more than $W$ consecutive rounds.
